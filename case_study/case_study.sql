@@ -195,4 +195,4 @@ where (ho_ten like 'H%' or ho_ten like 'T%' or ho_ten like 'K%') and char_length
 
 select ma_khach_hang,ho_ten
 from khach_hang
-where (dia_chi like '%Đà Nẵng%' or dia_chi like '%Quảng Trị%') and ((year(curdate())-year(ngay_sinh))>18 and (year(curdate())-year(ngay_sinh)) <= 50)
+where (dia_chi like '%Đà Nẵng%' or dia_chi like '%Quảng Trị%') and (timestampdiff(year,ngay_sinh,curdate())>=18 and (timestampdiff(year,ngay_sinh,curdate())) <= 50)

@@ -1,5 +1,5 @@
-create database ss2;
-use ss2;
+create database quan_ly_vat_tu;
+use quan_ly_vat_tu;
 
 create table nhacc(
 	mancc int primary key,
