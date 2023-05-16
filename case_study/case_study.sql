@@ -195,4 +195,28 @@ where (ho_ten like 'H%' or ho_ten like 'T%' or ho_ten like 'K%') and char_length
 
 select ma_khach_hang,ho_ten
 from khach_hang
-where (dia_chi like '%Đà Nẵng%' or dia_chi like '%Quảng Trị%') and (timestampdiff(year,ngay_sinh,curdate())>=18 and (timestampdiff(year,ngay_sinh,curdate())) <= 50)
+where (dia_chi like '%Đà Nẵng%' or dia_chi like '%Quảng Trị%') and (timestampdiff(year,ngay_sinh,curdate())>=18 and (timestampdiff(year,ngay_sinh,curdate())) <= 50);
+
+select kh.ma_khach_hang, kh.ho_ten, count(kh.ma_khach_hang)
+from hop_dong hd
+join khach_hang kh
+on hd.ma_khach_hang = kh.ma_khach_hang
+join loai_khach lk
+on lk.ma_loai_khach = kh.ma_loai_khach
+where lk.ten_loai_khach = "Diamond"
+group by ma_khach_hang 
+order by count(kh.ma_khach_hang);
+
+select kh.ma_khach_hang, kh.ho_ten, lk.ten_loai_khach, hd.ma_hop_dong,dv.ten_dich_vu, hd.ngay_lam_hop_dong,hd.ngay_ket_thuc, (dv.chi_phi_thue+dvdk.gia*hdct.so_luong) as total
+from dich_vu_di_kem dvdk
+join hop_dong_chi_tiet hdct
+on dvdk.ma_dich_vu_di_kem = hdct.ma_dich_vu_di_kem
+join hop_dong hd
+on hd.ma_hop_dong = hdct.ma_hop_dong
+join dich_vu dv
+on dv.ma_dich_vu = hd.ma_dich_vu
+join khach_hang kh
+on kh.ma_khach_hang = hd.ma_khach_hang
+join loai_khach lk
+on lk.ma_loai_khach = kh.ma_loai_khach
+order by hd.ma_hop_dong
