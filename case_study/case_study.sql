@@ -377,5 +377,226 @@ select ma_nhan_vien
 from hop_dong
 group by ma_nhan_vien
 having count(ma_nhan_vien) <=3
-)
+);
 
+-- 16.	Xóa những Nhân viên chưa từng lập được hợp đồng nào từ năm 2019 đến năm 2021.
+set sql_safe_updates= 0;
+delete from nhan_vien 
+-- select ma_nhan_vien,ho_ten
+-- from nhan_vien
+where ma_nhan_vien not in (
+select ma_nhan_vien
+from hop_dong
+where year(ngay_lam_hop_dong) between 2019 and 2021
+group by ma_nhan_vien
+);
+set sql_safe_updates= 1;
+
+-- 17.	Cập nhật thông tin những khách hàng có ten_loai_khach từ Platinum lên Diamond, 
+-- chỉ cập nhật những khách hàng đã từng đặt phòng với Tổng Tiền thanh toán trong năm 2021 là lớn hơn 10.000.000 VNĐ.
+
+set sql_safe_updates= 0;
+
+update loai_khach
+set ten_loai_khach = "Diamond"
+where ma_loai_khach in ( select* from (
+select lk.ma_loai_khach
+from loai_khach lk
+join khach_hang kh 
+on lk.ma_loai_khach = kh.ma_loai_khach
+where kh.ma_khach_hang in(
+select kh.ma_khach_hang
+from loai_khach lk
+join khach_hang kh
+on lk.ma_loai_khach = kh.ma_loai_khach
+join hop_dong hd
+on hd.ma_khach_hang = kh.ma_khach_hang
+left join hop_dong_chi_tiet hdct
+on hdct.ma_hop_dong = hd.ma_hop_dong
+left join dich_vu_di_kem dvdk
+on dvdk.ma_dich_vu_di_kem = hdct.ma_dich_vu_di_kem
+left join dich_vu dv
+on dv.ma_dich_vu = hd.ma_dich_vu
+where year(hd.ngay_lam_hop_dong) = 2021
+group by kh.ma_khach_hang,hd.ma_hop_dong
+having (sum(dv.chi_phi_thue+ifnull(dvdk.gia*hdct.so_luong,0))) >10000000
+) and lk.ten_loai_khach = "Platinium") as t);
+
+set sql_safe_updates= 1;
+
+-- 18.	Xóa những khách hàng có hợp đồng trước năm 2021 (chú ý ràng buộc giữa các bảng).
+
+alter table khach_hang
+add column isDelete tinyint default 0;
+set sql_safe_updates = 0;
+update khach_hang
+set isDelete = 1
+where ma_khach_hang in (
+select ma_khach_hang
+from hop_dong
+where year(ngay_lam_hop_dong) <2021
+);
+select * from khach_hang;
+
+-- 19.	Cập nhật giá cho các dịch vụ đi kèm được sử dụng trên 10 lần trong năm 2020 lên gấp đôi.
+
+set sql_safe_updates = 0;
+-- update dich_vu_di_kem
+-- set gia = gia *2
+select *
+from dich_vu_di_kem
+where ma_dich_vu_di_kem in (
+select hdct.ma_dich_vu_di_kem
+from hop_dong_chi_tiet hdct
+join hop_dong hd
+on hd.ma_hop_dong = hdct.ma_hop_dong
+where year(hd.ngay_lam_hop_dong) = 2020
+group by hdct.ma_dich_vu_di_kem
+having sum(hdct.so_luong) >=10
+) ;
+set sql_safe_updates = 1;
+
+
+-- 20.	Hiển thị thông tin của tất cả các nhân viên và khách hàng có trong hệ thống, thông tin hiển thị bao gồm
+--  id (ma_nhan_vien, ma_khach_hang), ho_ten, email, so_dien_thoai, ngay_sinh, dia_chi.
+
+select ma_nhan_vien as id ,ho_ten,email,so_dien_thoai,ngay_sinh,dia_chi
+from nhan_vien
+union all
+select ma_khach_hang,ho_ten,email,so_dien_thoai,ngay_sinh,dia_chi
+from khach_hang;
+
+-- 21.	Tạo khung nhìn có tên là v_nhan_vien để lấy được thông tin của tất cả các nhân viên có địa chỉ là “Hải Châu” và 
+-- đã từng lập hợp đồng cho một hoặc nhiều khách hàng bất kì với ngày lập hợp đồng là “12/12/2019”.
+
+-- 22.	Thông qua khung nhìn v_nhan_vien thực hiện cập nhật địa chỉ thành “Liên Chiểu” đối với tất cả các nhân viên được nhìn thấy bởi khung nhìn này.
+
+-- 23.	Tạo Stored Procedure sp_xoa_khach_hang dùng để xóa thông tin của một khách hàng nào đó với ma_khach_hang được truyền vào như là 1 tham số của sp_xoa_khach_hang.
+
+delimiter //
+create procedure sp_xoa_khach_hang ( id int)
+begin 
+	alter table khach_hang 
+    add column is_delete tinyint;
+    update khach_hang
+    set is_delete = 1
+    where ma_khach_hang = id;
+end //
+delimiter ;
+
+select * from khach_hang;
+set sql_safe_updates =0;
+call sp_xoa_khach_hang(1);
+set sql_safe_updates =1;
+
+-- 24.	Tạo Stored Procedure sp_them_moi_hop_dong dùng để thêm mới vào bảng hop_dong với yêu cầu sp_them_moi_hop_dong
+--  phải thực hiện kiểm tra tính hợp lệ của dữ liệu bổ sung, với nguyên tắc không được trùng khóa chính và đảm bảo toàn vẹn tham chiếu đến các bảng liên quan.
+
+delimiter //
+create procedure sp_them_moi_hop_dong(p_ma_hop_dong int , p_ngay_lam_hop_dong datetime, p_ngay_ket_thuc datetime, p_tien_coc double,
+										p_ma_nhan_vien int, p_ma_khach_hang int, p_ma_dich_vu int)
+begin
+ if (p_ma_hop_dong in (
+	select ma_hop_dong
+    from hop_dong
+ )) 
+ then signal sqlstate "45000"
+ set message_text = "Đã tổn tại mã hợp đồng này";
+ end if ;
+ 
+  if (p_ma_nhan_vien not in (
+	select ma_nhan_vien
+    from nhan_vien
+ )) 
+ then signal sqlstate "45000"
+ set message_text = "Không tổn tại mã nhân viên này";
+ end if ;
+ 
+  if (p_ma_khach_hang not in (
+	select ma_khach_hang
+    from khach_hang
+ )) 
+ then signal sqlstate "45000"
+ set message_text = "Không tổn tại mã khách hàng này";
+ end if ;
+ 
+   if (p_ma_dich_vu not in (
+	select ma_dich_vu
+    from dich_vu
+ )) 
+ then signal sqlstate "45000"
+ set message_text = "Không tổn tại mã dịch vụ này";
+ end if ;
+ 
+ insert into hop_dong(ma_hop_dong, ngay_lam_hop_dong, ngay_ket_thuc, tien_dat_coc ,
+										ma_nhan_vien , ma_khach_hang , ma_dich_vu)
+ values (p_ma_hop_dong , p_ngay_lam_hop_dong , p_ngay_ket_thuc , p_tien_coc ,
+										p_ma_nhan_vien , p_ma_khach_hang , p_ma_dich_vu);
+                                        
+end // 
+delimiter ;
+
+call sp_them_moi_hop_dong(14,20120130,20120131,25000, 3,2,7);
+select * from hop_dong;
+select * from nhan_vien;
+select * from khach_hang;
+select * from dich_vu;
+
+-- 25.	Tạo Trigger có tên tr_xoa_hop_dong khi xóa bản ghi trong bảng hop_dong thì hiển thị 
+-- tổng số lượng bản ghi còn lại có trong bảng hop_dong ra giao diện console của database.
+
+create table hd_history(
+sum int
+);
+
+delimiter //
+create trigger tr_xoa_hop_dong
+after delete on hop_dong
+for each row
+begin
+declare p_sum int;
+set p_sum = (
+select count(*)
+from hop_dong
+) ;
+insert into nv_history(sum)
+values(p_sum) ;
+end //
+
+delimiter ;
+
+-- 26.	Tạo Trigger có tên tr_cap_nhat_hop_dong khi cập nhật ngày kết thúc hợp đồng, cần kiểm tra xem thời gian cập nhật có phù hợp hay không,
+--  với quy tắc sau: Ngày kết thúc hợp đồng phải lớn hơn ngày làm hợp đồng ít nhất là 2 ngày. 
+--  Nếu dữ liệu hợp lệ thì cho phép cập nhật, nếu dữ liệu không hợp lệ thì in ra thông báo 
+--  “Ngày kết thúc hợp đồng phải lớn hơn ngày làm hợp đồng ít nhất là 2 ngày” trên console của database.
+
+delimiter //
+create procedure check_time( p_time datetime, id int)
+begin
+declare ngay_lam_hop_dong datetime;
+set ngay_lam_hop_dong = (select ngay_lam_hop_dong from hop_dong where ma_hop_dong = id) ;  
+if (day(p_time )-day(ngay_lam_hop_dong)) < 2
+then signal sqlstate "45000"
+ set message_text = "Ngày kết thúc hợp đồng phải lớn hơn ngày làm hợp đồng ít nhất là 2 ngày";
+ end if ;
+end //
+delimiter ;
+
+delimiter //
+create trigger tr_cap_nhat_hop_dong
+after update on hop_dong
+for each row
+begin
+declare id int;
+set id = (select ma_hop_dong from hop_dong where ngay_ket_thuc = new.ngay_ket_thuc) ;
+call check_time( new.ngay_ket_thuc,id) ;
+end //
+delimiter ;
+
+drop trigger tr_cap_nhat_hop_dong;
+
+update hop_dong
+set ngay_ket_thuc = "20200715"
+where ma_hop_dong = 2;
+
+select * from hop_dong
