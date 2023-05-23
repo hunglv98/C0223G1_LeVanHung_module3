@@ -570,33 +570,151 @@ delimiter ;
 --  Nếu dữ liệu hợp lệ thì cho phép cập nhật, nếu dữ liệu không hợp lệ thì in ra thông báo 
 --  “Ngày kết thúc hợp đồng phải lớn hơn ngày làm hợp đồng ít nhất là 2 ngày” trên console của database.
 
-delimiter //
-create procedure check_time( p_time datetime, id int)
-begin
-declare ngay_lam_hop_dong datetime;
-set ngay_lam_hop_dong = (select ngay_lam_hop_dong from hop_dong where ma_hop_dong = id) ;  
-if (day(p_time )-day(ngay_lam_hop_dong)) < 2
-then signal sqlstate "45000"
- set message_text = "Ngày kết thúc hợp đồng phải lớn hơn ngày làm hợp đồng ít nhất là 2 ngày";
- end if ;
-end //
-delimiter ;
+-- delimiter //
+-- create procedure check_time( p_time datetime, id int)
+-- begin
+-- declare ngay_lam_hop_dong datetime;
+-- set ngay_lam_hop_dong = (select ngay_lam_hop_dong from hop_dong where ma_hop_dong = id) ;  
+-- if timestampdiff(day,ngay_lam_hop_dong,p_time) < 2
+-- then signal sqlstate "45000"
+--  set message_text = "Ngày kết thúc hợp đồng phải lớn hơn ngày làm hợp đồng ít nhất là 2 ngày";
+--  end if ;
+-- end //
+-- delimiter ;
+
+-- call check_time("20200715",2);
 
 delimiter //
 create trigger tr_cap_nhat_hop_dong
 after update on hop_dong
 for each row
 begin
-declare id int;
-set id = (select ma_hop_dong from hop_dong where ngay_ket_thuc = new.ngay_ket_thuc) ;
-call check_time( new.ngay_ket_thuc,id) ;
+declare update_id int;
+declare update_massage varchar(255);
+set update_id = (select ma_hop_dong from hop_dong where ngay_ket_thuc = new.ngay_ket_thuc) ;
+set update_massage = "Ngày kết thúc hợp đồng phải lớn hơn ngày làm hợp đồng ít nhất là 2 ngày";
+if timestampdiff(day,old.ngay_lam_hop_dong,new.ngay_ket_thuc) < 2
+then insert into hd_update (id,massage)
+value (update_id,update_massage) ;
+ end if ;
 end //
 delimiter ;
 
 drop trigger tr_cap_nhat_hop_dong;
 
 update hop_dong
-set ngay_ket_thuc = "20200715"
+set ngay_ket_thuc = "20200714"
 where ma_hop_dong = 2;
 
-select * from hop_dong
+select * from hop_dong;
+
+create table hd_update(
+id int,
+massage varchar(255)
+);
+
+select * from hd_update;
+
+-- 27.	Tạo Function thực hiện yêu cầu sau:
+-- a.	Tạo Function func_dem_dich_vu: Đếm các dịch vụ đã được sử dụng với tổng tiền là > 2.000.000 VNĐ.
+-- b.	Tạo Function func_tinh_thoi_gian_hop_dong: Tính khoảng thời gian dài nhất tính từ lúc bắt đầu làm hợp đồng đến lúc kết thúc hợp đồng
+--  mà khách hàng đã thực hiện thuê dịch vụ (lưu ý chỉ xét các khoảng thời gian dựa vào từng lần làm hợp đồng thuê dịch vụ,
+--  không xét trên toàn bộ các lần làm hợp đồng). Mã của khách hàng được truyền vào như là 1 tham số của function này.
+
+-- câu a
+
+delimiter //
+create function func_dem_dich_vu()
+returns int
+deterministic
+begin
+declare count int;
+set count = (
+select count(*) from(
+select hd.ma_dich_vu
+from hop_dong hd
+left join dich_vu dv
+on dv.ma_dich_vu = hd.ma_dich_vu
+left join hop_dong_chi_tiet hdct
+on hdct.ma_hop_dong = hd.ma_hop_dong
+left join dich_vu_di_kem dvdk
+on dvdk.ma_dich_vu_di_kem = hdct.ma_dich_vu_di_kem
+group by hd.ma_dich_vu
+having (sum(dv.chi_phi_thue+ifnull(dvdk.gia*hdct.so_luong,0))) >2000000) as t);
+return count;
+end //
+delimiter ;
+
+select func_dem_dich_vu();
+
+-- câu b
+-- chưa tính được khoảng thời gian
+delimiter //
+create function func_tinh_thoi_gian_hop_dong(p_id int)
+returns datetime
+deterministic
+begin
+declare result datetime;
+set result = (
+select hd.ngay_lam_hop_dong
+from hop_dong hd
+join dich_vu dv
+on dv.ma_dich_vu = hd.ma_dich_vu
+join khach_hang kh
+on kh.ma_khach_hang = hd.ma_khach_hang
+where kh.ma_khach_hang = p_id
+order by (hd.ngay_ket_thuc-hd.ngay_lam_hop_dong) desc
+limit 1
+);
+return result;
+end //
+delimiter ;
+
+select func_tinh_thoi_gian_hop_dong(4);
+
+select * from hop_dong;
+select * from khach_hang;
+
+-- 	28.	Tạo Stored Procedure sp_xoa_dich_vu_va_hd_room để tìm các dịch vụ được thuê bởi khách hàng với loại dịch vụ là “Room”
+--     từ đầu năm 2015 đến hết năm 2019 để xóa thông tin của các dịch vụ đó (tức là xóa các bảng ghi trong bảng dich_vu)
+--     và xóa những hop_dong sử dụng dịch vụ liên quan (tức là phải xóa những bản gi trong bảng hop_dong) và những bản liên quan khác.
+
+delimiter //
+create procedure sp_xoa_dich_vu_va_hd_room()
+begin
+alter table hop_dong
+add column is_delete2 tinyint; 
+alter table dich_vu
+add column is_delete3 tinyint; 
+update hop_dong 
+set is_delete2 = 1
+where ma_hop_dong in (
+select hd.ma_hop_dong
+from loai_dich_vu ldv
+join dich_vu dv
+on dv.ma_loai_dich_vu = ldv.ma_loai_dich_vu
+join hop_dong hd
+on hd.ma_dich_vu = dv.ma_dich_vu
+where ldv.ten_loai_dich_vu = "room" and (year(hd.ngay_lam_hop_dong) between 2020 and 2021)
+);
+
+update dich_vu 
+set is_delete3 = 1
+where ma_dich_vu in (
+select dv.ma_dich_vu
+from loai_dich_vu ldv
+join dich_vu dv
+on dv.ma_loai_dich_vu = ldv.ma_loai_dich_vu
+join hop_dong hd
+on hd.ma_dich_vu = dv.ma_dich_vu
+where ldv.ten_loai_dich_vu = "room" and (year(hd.ngay_lam_hop_dong) between 2020 and 2021)
+group by dv.ma_dich_vu
+)
+;
+end //
+delimiter ;
+
+set sql_safe_updates = 0;
+call sp_xoa_dich_vu_va_hd_room();
+
+select * from dich_vu;
