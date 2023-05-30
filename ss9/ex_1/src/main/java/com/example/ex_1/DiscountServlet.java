@@ -15,8 +15,8 @@ public class DiscountServlet extends HttpServlet {
         double discountPrice = price - discountAmount;
         request.setAttribute("discountAmount",discountAmount);
         request.setAttribute("discountPrice",discountPrice);
-        RequestDispatcher r =request.getRequestDispatcher("result.jsp");
-        r.forward(request,response);
+        RequestDispatcher requestDispatcher =request.getRequestDispatcher("result.jsp");
+        requestDispatcher.forward(request,response);
     }
 
     @Override

@@ -5,10 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b129aa52-c044-4a27-afcf-6d9333813d56" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../../ss7/practice/corousel.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/example/ex_1/DiscountServlet.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/webapp/result.jsp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../ss8/ex_2.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../ss8/ex_2.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/ex_1/DiscountServlet.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/ex_1/DiscountServlet.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -48,7 +45,7 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$USER_HOME$/Desktop/ss9_javaweb" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
@@ -103,6 +100,7 @@
       <option name="presentableId" value="Default" />
       <updated>1685335634385</updated>
       <workItem from="1685335636214" duration="4474000" />
+      <workItem from="1685421114232" duration="103000" />
     </task>
     <servers />
   </component>
@@ -119,5 +117,6 @@
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
   </component>
 </project>
