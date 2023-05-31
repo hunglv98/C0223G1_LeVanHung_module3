@@ -7,7 +7,7 @@
 <body>
 <fieldset style="width: 500px">
     <legend>Exercise</legend>
-        <form action="DiscountServlet">
+        <form action="/discount">
             <label>Product Description</label>
             <input type="text" name="description" placeholder="Input the description">
             <hr>

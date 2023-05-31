@@ -5,7 +5,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b129aa52-c044-4a27-afcf-6d9333813d56" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/../../ss10/demo/src/main/java/model/Student.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../ss10/demo/src/main/java/repo/IStudentRepo.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../ss10/demo/src/main/java/repo/StudentRepo.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../ss10/demo/src/main/java/service/IStudentService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../ss10/demo/src/main/java/service/StudentService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../ss10/demo/src/main/java/servlet/StudentServlet.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../ss10/demo/src/main/webapp/add.jsp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../ss10/demo/src/main/webapp/edit.jsp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../ss10/demo/src/main/webapp/show_list.jsp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ss10/ex_2/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../../ss10/ex_2/.idea/gradle.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/example/ex_1/DiscountServlet.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/ex_1/DiscountServlet.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/webapp/index.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/webapp/index.jsp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -101,6 +112,7 @@
       <updated>1685335634385</updated>
       <workItem from="1685335636214" duration="4474000" />
       <workItem from="1685421114232" duration="103000" />
+      <workItem from="1685514459229" duration="66000" />
     </task>
     <servers />
   </component>
